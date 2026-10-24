@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Gera uma saída FICTÍCIA no formato do whatsapp-portable-viewer (data/chats.js e data/chat_N.js).
 
 Nada aqui vem de conversas reais: contatos, horários, textos e ligações são sorteados com uma semente

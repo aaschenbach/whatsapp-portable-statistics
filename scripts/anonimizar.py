@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Anonimiza a saída do whatsapp-portable-viewer para o painel de estatísticas.
 
 Lê somente <pendrive>/data/chats.js e <pendrive>/data/chat_*.js (a pasta Media não é usada)
