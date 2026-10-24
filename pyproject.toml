@@ -1,0 +1,22 @@
+[project]
+name = "whatsapp-portable-statistics"
+version = "0.1.0"
+description = "Painel offline de estatisticas de atendimento (WhatsApp / WhatsApp Business) a partir da saida do whatsapp-portable-viewer"
+readme = "README.md"
+authors = [
+    { name = "Alexandre Aschenbach", email = "108477213+aaschenbach@users.noreply.github.com" }
+]
+requires-python = ">=3.9"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.6",
+]
+
+[tool.ruff]
+line-length = 140
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

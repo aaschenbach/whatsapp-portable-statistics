@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync
+      - run: uv run ruff check .
+      - run: uv run pytest -q
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node tests/check-glossary.js
+      - run: node --check stats/stats-core.js
+      - run: node --check stats/stats-export.js
+      - run: node --check stats/stats-glossario.js
+      - run: node --check stats/stats.js
+      - run: node --check stats/ajuda.js

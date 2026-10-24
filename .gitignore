@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[oc]
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+
+# Ambientes virtuais
+.venv
+
+# Dados gerados a partir de conversas reais (NUNCA versionar)
+dados/*
+!dados/.gitkeep
+pendrive/
+Media/
+msgstore.db*
+wa.db*
+*.crypt12
+*.crypt14
+*.crypt15
+encrypted_backup.key
+*.vcf
+contatos*.csv
+logs/
+
+# Saídas geradas da demonstração (o gerador é versionado, o resultado não)
+demo/saida/
+
+# Node
+node_modules/
+
+# Arquivos de instrução de agentes (contêm instruções privadas do ambiente)
+CLAUDE.md
+AGENTS.md
