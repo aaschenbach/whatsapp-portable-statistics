@@ -49,9 +49,48 @@ rode o passo 2.
 Gere o viewer de novo (veja o [capítulo do viewer sobre novo backup](https://github.com/aaschenbach/whatsapp-portable-viewer/blob/main/docs/08-novo-backup.md))
 e rode o script de preparação outra vez. O `dados/estatisticas.js` é substituído. Seus ajustes na tela ficam salvos no navegador.
 
-## Levar o painel para outro computador
+## Levar o painel para um pendrive ou uma pasta
 
-Depois de rodar o script, copie **esta pasta** (poucos MB). Não é preciso levar o pendrive nem a pasta `Media`.
+Depois de rodar o script de preparação, use o `copiar-painel` para colocar o painel num pendrive ou numa pasta (por exemplo, para
+usar em outro computador ou publicar num site). Ele copia **só o necessário**, sem você montar a lista de arquivos.
+
+| Sistema | Como |
+|---|---|
+| Windows | dê dois cliques em `copiar-painel.bat` |
+| Windows (PowerShell) | `.\copiar-painel.ps1` ou `.\copiar-painel.ps1 -Destino E:` |
+| Linux / macOS | `bash copiar-painel.sh` ou `bash copiar-painel.sh /media/usb` |
+
+O **destino** pode ser a letra do pendrive (`E`, `E:` ou `E:\`) ou uma pasta (`C:\stats`, `/media/usb`, `~/stats`). Se a pasta não
+existir, ela é criada.
+
+**O que ele copia** (e só isso):
+
+```
+estatisticas.html
+ajuda.html
+stats/                      (código e estilos; inclui o Chart.js e a licença dele)
+dados/estatisticas.js       (o arquivo gerado pelo preparar-dados; só se você concordar)
+```
+
+Não vão `scripts/`, `demo/`, `docs/`, `tests/`, `.git/`, os READMEs nem a pasta `Media`.
+
+**Como ele se comporta**
+
+- Grava numa subpasta **`Estatisticas`** do destino (assim não se mistura com outros arquivos do pendrive, nem com os do viewer).
+- Se o arquivo de dados ainda não existe, avisa e **para**: rode antes o `preparar-dados`.
+- **Pergunta** se deve copiar o arquivo de dados, porque ele tem as datas e horários de cada mensagem (sem nomes, telefones nem texto).
+- Se já existe um painel no destino, **pergunta antes de substituir** os arquivos do painel. Nunca apaga nada, nem outros arquivos nem um
+  `dados/estatisticas.js` antigo (e avisa quando um antigo continua lá).
+- **Confere cada arquivo copiado por SHA-256** e mostra um resumo. Confere também se há espaço no destino.
+
+| Opção | Efeito |
+|---|---|
+| `-SemDados` (`--sem-dados`) | copia o painel sem o arquivo de dados, por exemplo para publicar num site |
+| `-Demo` (`--demo`) | copia com **dados fictícios** da demonstração, em vez dos seus |
+| `-Sim` (`--sim`) | responde "sim" a tudo, sem perguntar |
+| `--subpasta NOME` | usa outro nome de subpasta (`--subpasta ""` grava direto na raiz do destino) |
+
+Depois, abra `estatisticas.html` dentro de `Estatisticas`. No pendrive, funciona offline, de qualquer computador.
 
 ## Deixar tudo "virgem"
 

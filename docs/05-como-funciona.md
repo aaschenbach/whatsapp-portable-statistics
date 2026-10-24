@@ -11,6 +11,8 @@ pendrive/data/chats.js, chat_*.js   ──►  scripts/anonimizar.py   ──►
 |---|---|
 | `scripts/anonimizar.py` | lê a saída do viewer, classifica e anonimiza, grava `dados/estatisticas.js` |
 | `preparar-dados.ps1` / `.sh` / `.bat` | pedem a pasta, escolhem `uv` ou Python e chamam o `anonimizar.py` |
+| `scripts/copiar_painel.py` | copia só o necessário para um pendrive ou pasta, confere por SHA-256 e nunca apaga nada |
+| `copiar-painel.ps1` / `.sh` / `.bat` | pedem o destino, escolhem `uv` ou Python e chamam o `copiar_painel.py` |
 | `estatisticas.html` | o painel (HTML + `stats/`) |
 | `stats/stats-core.js` | carga dos dados, períodos, feriados, agregação e tempos de resposta |
 | `stats/stats-export.js` | tabelas neutras, CSV e XLSX (gerador próprio, sem dependências) |
@@ -68,7 +70,7 @@ Os dois critérios são regras de texto, **não exatas**. As ressalvas estão na
 ```bash
 uv sync
 uv run ruff check .
-uv run pytest -q                  # anonimizador, com dados inventados
+uv run pytest -q                  # anonimizador e cópia do painel, com dados inventados
 node tests/check-glossary.js      # todo indicador e gráfico tem explicação, e toda referência "Ver ..." aponta para um item existente
 ```
 

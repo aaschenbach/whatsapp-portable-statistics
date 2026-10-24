@@ -26,7 +26,8 @@ anônimo, no sentido da LGPD, e proteja-o de acordo.
 
 - Nunca versione: `dados/estatisticas.js`, `pendrive/`, `Media/`, `msgstore.db*`, `wa.db*`, `*.crypt15`, `encrypted_backup.key`, `*.vcf`,
   `contatos*.csv`, `logs/`. O `.gitignore` deste repositório já cobre isso, mas **confira o `git status`** antes de cada commit.
-- Para publicar o painel como site, publique **apenas** as páginas e a pasta `stats/`, sem `dados/estatisticas.js`, ou use dados fictícios.
+- Para publicar o painel como site, use `copiar-painel -SemDados` (copia só as páginas e a pasta `stats/`, sem `dados/estatisticas.js`) ou
+  `copiar-painel -Demo` (com dados fictícios).
   Publicar o arquivo de dados expõe a atividade (datas e horários) da sua operação.
 - Em prints e exemplos, use somente os dados fictícios da pasta `demo/`.
 

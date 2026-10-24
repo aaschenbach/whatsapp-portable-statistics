@@ -38,6 +38,19 @@ Propriedades → **Desbloquear**.
 O painel mostra as ligações que o viewer exporta, isto é, as que têm uma mensagem de "chamada" na conversa. Ligações que o WhatsApp registra
 sem essa mensagem não são exportadas pelo viewer e não aparecem aqui.
 
+## "A unidade E: não foi encontrada" ao copiar para o pendrive
+
+O pendrive não está conectado, ou a letra é outra. Confira no Explorador de Arquivos e informe a letra certa (`E`, `E:` ou `E:\`).
+
+## "Não existe dados/estatisticas.js" ao rodar o copiar-painel
+
+Você ainda não rodou o `preparar-dados` (capítulo 1). Para copiar o painel **sem** os dados (por exemplo, para um site), use `-SemDados`.
+
+## O painel copiado mostra "Nenhum dado carregado"
+
+A cópia foi feita sem o arquivo de dados (`-SemDados`, ou você respondeu "não" à pergunta). Copie `dados/estatisticas.js` para a pasta
+`dados` dentro de `Estatisticas`, ou rode o `copiar-painel` de novo.
+
 ## O PDF não baixa sozinho
 
 O PDF usa a janela de impressão do navegador: escolha "Salvar como PDF". É assim para funcionar sem internet e sem bibliotecas externas.

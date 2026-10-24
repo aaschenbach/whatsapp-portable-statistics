@@ -25,6 +25,7 @@ works from a single small file.
 - **Compare with the previous period** (or the same period last year), with a "closed periods only" option.
 - Custom periods, dashboard-style charts (bars, stacked, lines, area, donut) and tables for everything.
 - **Export to PDF, CSV and XLSX.**
+- A script that **copies the dashboard to a USB stick or folder** (only what is needed, verified by SHA-256).
 - Business hours, out-of-hours volume, heat map by weekday and hour, weekends and holidays can be ignored.
 - Automatic messages (greeting/away) and closing messages ("thanks", "ok", "bye") can be ignored in response times.
 - Every number has an **"i"** button with a short explanation and a "Learn more" link to the exact calculation rules.
@@ -64,7 +65,25 @@ direction, media type and a few computed flags: **no names, phone numbers or mes
 
 Double-click `estatisticas.html`. Any modern browser works, offline. To update, run the viewer and the script again.
 
-To use the dashboard on another computer, copy this folder (a few MB) after running the script. You do not need the USB stick.
+### Step 4 (optional) — Take it with you: USB stick or folder
+
+To put the dashboard on a USB stick or in a folder (e.g. to use it on another computer), run the copy script and enter the
+destination (`E:` for a USB stick, or a folder such as `C:\stats`):
+
+```powershell
+# Windows (double-click copiar-painel.bat, or:)
+.\copiar-painel.ps1 -Destino E:
+```
+
+```bash
+# Linux / macOS
+bash copiar-painel.sh /media/usb
+```
+
+It copies **only what the dashboard needs** (the two pages, `stats/` and, if you agree, `dados/estatisticas.js`) into an
+`Estatisticas` sub-folder, verifies every file by SHA-256, and never deletes anything at the destination.
+Options: `-SemDados` / `--sem-dados` (copy without the data file, e.g. for a website) and `-Demo` / `--demo`
+(copy with fictional demo data). You do not need the viewer's USB stick or the `Media` folder.
 
 ---
 

@@ -21,6 +21,7 @@ jobs:
         with:
           node-version: 22
       - run: node tests/check-glossary.js
+      - run: bash -n preparar-dados.sh && bash -n copiar-painel.sh
       - run: node --check stats/stats-core.js
       - run: node --check stats/stats-export.js
       - run: node --check stats/stats-glossario.js

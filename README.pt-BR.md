@@ -27,6 +27,7 @@ sem telefones e sem o texto das mensagens**, e **sem precisar levar o pendrive i
 - **Comparação** com o período anterior (ou o mesmo período do ano anterior) e a opção **"Somente período fechado"**.
 - Período personalizado, gráficos de painel moderno (barras, empilhado, linhas, área e rosca) e **tabelas** para tudo.
 - **Exportação em PDF, CSV e XLSX.**
+- Um script que **copia o painel para um pendrive ou pasta** (só o necessário, conferido por SHA-256).
 - Horário de atendimento, volume **fora do horário**, mapa de calor por dia e hora; sábados, domingos e feriados podem ser desconsiderados.
 - Mensagens **automáticas** (saudação e ausência) e **encerramentos** ("obrigada", "ok", "tchau") podem ser desconsiderados.
 - Cada número tem um botão **"i"** com uma explicação curta e um "Saiba mais" com a regra de cálculo completa.
@@ -41,7 +42,7 @@ sem telefones e sem o texto das mensagens**, e **sem precisar levar o pendrive i
 | Ainda não tem a saída do viewer | Comece pelo [guia do viewer](https://github.com/aaschenbach/whatsapp-portable-viewer/blob/main/README.pt-BR.md) |
 | Quer só ver como fica | Veja [as telas da demonstração](docs/02-usando-o-painel.md) (dados fictícios) |
 
-## Resumo em 3 passos
+## Resumo em 3 passos (e um quarto, opcional)
 
 1. **Gere o viewer** com o [whatsapp-portable-viewer](https://github.com/aaschenbach/whatsapp-portable-viewer) até ter a pasta de saída
    (normalmente `pendrive`), que contém uma subpasta `data`.
@@ -53,7 +54,17 @@ sem telefones e sem o texto das mensagens**, e **sem precisar levar o pendrive i
    `data/chats.js` e `data/chat_*.js` (a pasta `Media` **não** é usada) e grava **um único arquivo**, `dados/estatisticas.js`.
 3. **Abra `estatisticas.html`** com dois cliques. Funciona em qualquer navegador atual, sem internet.
 
-Para atualizar, rode o viewer e o script de novo. Para usar em outro computador, copie esta pasta (poucos MB): não precisa do pendrive.
+4. **(Opcional) Leve para um pendrive ou pasta.** Rode `copiar-painel` e informe o destino (`E:` para um pendrive, ou uma pasta
+   como `C:\stats`):
+   - Windows: dê dois cliques em `copiar-painel.bat` (ou `.\copiar-painel.ps1 -Destino E:`).
+   - Linux/macOS: `bash copiar-painel.sh /media/usb`.
+
+   Ele copia **só o necessário** (as duas páginas, `stats/` e, se você concordar, `dados/estatisticas.js`) para uma subpasta
+   `Estatisticas`, confere cada arquivo por SHA-256 e **nunca apaga nada** no destino. Opções: `-SemDados` / `--sem-dados` (para
+   publicar o painel sem os dados) e `-Demo` / `--demo` (com dados fictícios).
+
+Para atualizar, rode o viewer e o script de preparação de novo. Você **não precisa** do pendrive do viewer nem da pasta `Media`
+para usar o painel em outro computador.
 
 ## Índice do guia
 
