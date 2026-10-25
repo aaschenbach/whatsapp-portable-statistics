@@ -28,6 +28,10 @@ logs/
 # Saídas geradas da demonstração (o gerador é versionado, o resultado não)
 demo/saida/
 
+# Exportações locais do painel (geradas pelo copiar-painel)
+Painel/
+Painel2/
+
 # Node
 node_modules/
 

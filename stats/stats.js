@@ -522,9 +522,14 @@
   function statusPlain() { var p = lastStatus || statusParts(); return p.line1 + " · " + p.chips.map(function (c) { return c.t; }).join(" · "); }
   function status() {
     var p = lastStatus = statusParts();
-    $("status").innerHTML = "<div>" + esc(p.line1) + '</div><div class="chips">' +
-      p.chips.map(function (c) { return '<span class="chip' + (c.chg ? " chg" : "") + '"' + (c.tip ? ' title="' + esc(c.tip) + '"' : "") + ">" + esc(c.t) + "</span>"; }).join("") +
-      '<button type="button" class="link" data-adj="1">alterar ajustes</button></div>';
+    var ICON = '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7v4M8 5.5v.5" stroke-linecap="round"/></svg>';
+    var chipsHtml = p.chips.map(function (c) {
+      return '<span class="sd-chip' + (c.chg ? " chg" : "") + '"' + (c.tip ? ' title="' + esc(c.tip) + '"' : "") + ">" + esc(c.t) + "</span>";
+    }).join("");
+    $("status").innerHTML = '<div class="status-d">' + ICON +
+      '<div><div class="sd-line1">' + esc(p.line1) + '</div>' +
+      '<div class="sd-chips">' + chipsHtml +
+      '<button type="button" class="link" data-adj="1">alterar ajustes</button></div></div></div>';
   }
 
   function refresh() {
