@@ -643,7 +643,7 @@
     $("tabs").onclick = function (e) {
       var b = e.target.closest("button"); if (!b) return;
       S.tab = b.dataset.tab;
-      Array.prototype.forEach.call(this.children, function (c) { c.classList.toggle("on", c === b); });
+      Array.prototype.forEach.call(this.querySelectorAll("button"), function (c) { c.classList.toggle("on", c === b); });
       renderView(); window.scrollTo(0, 0);
     };
     $("themeBtn").onclick = function () {
@@ -762,7 +762,7 @@
     S.preset = "30d"; $("fPreset").value = "30d";
     applyPreset("30d");
     location.hash.slice(1).split(",").forEach(function (tk) {
-      if (TABS[tk]) { S.tab = tk; Array.prototype.forEach.call($("tabs").children, function (c) { c.classList.toggle("on", c.dataset.tab === tk); }); }
+      if (TABS[tk]) { S.tab = tk; Array.prototype.forEach.call($("tabs").querySelectorAll("button"), function (c) { c.classList.toggle("on", c.dataset.tab === tk); }); }
       if (tk === "light" || tk === "dark") document.documentElement.setAttribute("data-theme", tk);
       if (tk === "adv") openAdj();
       if (tk === "fechado") S.closed = true;
