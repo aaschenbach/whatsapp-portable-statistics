@@ -19,6 +19,7 @@ works from a single small file.
 ![Overview](docs/img/01-visao-geral.png)
 
 - Unique and **new contacts**, per day / week / month / quarter / semester / year.
+- **Contact source** (optional): identifies which channel each new contact came from (Instagram, Google, website, referral, or any channel you configure) based on the first message received.
 - Messages **received and sent**, by media type (text, image, document, audio, video, sticker, other).
 - **Response time** both ways (average, median, P90), first reply to new contacts, share within a target (SLA).
 - **Calls**: received/made, answered/missed, voice/video, duration, time to return a missed call.
@@ -60,6 +61,19 @@ bash preparar-dados.sh /path/to/pendrive
 It needs [`uv`](https://docs.astral.sh/uv/) **or** Python 3.8+ (standard library only). It reads only
 `data/chats.js` and `data/chat_*.js` and writes **one file**, `dados/estatisticas.js`, that contains only timestamps,
 direction, media type and a few computed flags: **no names, phone numbers or message text**.
+
+To also identify the contact source channel, pass `--origens` with a JSON config file (see `origens.exemplo.json`).
+If the script finds `origens.exemplo.json` in the project folder, it will ask whether to use it.
+
+```powershell
+# Windows — with source detection
+.\preparar-dados.ps1 -Pendrive "D:\pendrive" -Origens ".\origens.json"
+```
+
+```bash
+# Linux / macOS — with source detection
+bash preparar-dados.sh /path/to/pendrive "" ./origens.json
+```
 
 ### Step 3 — Open the dashboard
 

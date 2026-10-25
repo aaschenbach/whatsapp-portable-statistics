@@ -29,6 +29,24 @@ Na pasta deste projeto:
 Se você não informar a pasta, o script pergunta. Informe **a pasta que contém `data`** (não a `data` em si, e não a `Media`).
 O arquivo de saída é opcional: `-Saida "C:\outro\estatisticas.js"` (PowerShell) ou o segundo argumento (`.sh`).
 
+### Identificar o canal de origem dos contatos (opcional)
+
+Se você tiver um arquivo `origens.json` (veja `origens.exemplo.json` como ponto de partida), passe-o com `-Origens`:
+
+```powershell
+.\preparar-dados.ps1 -Pendrive "D:\pendrive" -Origens ".\origens.json"
+```
+```bash
+bash preparar-dados.sh /caminho/do/pendrive "" ./origens.json
+```
+
+Se você não passar o argumento e o arquivo `origens.exemplo.json` existir na pasta do projeto, o script pergunta se
+quer usá-lo. O arquivo de exemplo contém canais genéricos (Instagram, Google, site, TikTok, Facebook, indicação, YouTube)
+como ponto de partida.
+
+O `origens.json` é específico do seu negócio; edite-o com os canais e termos que fazem sentido para você. Veja o formato
+completo em [README.pt-BR.md](../README.pt-BR.md#identificar-o-canal-de-origem-dos-contatos-opcional).
+
 O script usa o `uv` se ele existir; senão, tenta o `python`/`py -3`. Se não achar nenhum, avisa o que instalar.
 
 ### O que o script faz

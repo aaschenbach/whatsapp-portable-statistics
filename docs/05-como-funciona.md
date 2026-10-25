@@ -25,9 +25,11 @@ pendrive/data/chats.js, chat_*.js   ──►  scripts/anonimizar.py   ──►
 O viewer grava `data/chats.js` (lista de conversas) e `data/chat_<id>.js` (mensagens de cada uma). Cada mensagem tem, entre outros,
 `t` (data e hora em milissegundos), `m` (1 = enviada), `y` (tipo: `t` texto, `i` imagem, `a` áudio, `v` vídeo, `g` GIF, `d` documento,
 `s` figurinha, `k` chamada, `x` aviso do sistema...). O anonimizador usa só isso, mais a presença de aviso de anúncio e o texto
-**apenas durante o processamento** (para detectar automáticas e encerramentos); o texto não é gravado.
+**apenas durante o processamento** (para detectar automáticas, encerramentos e canal de origem); o texto não é gravado.
 
 ## Formato de `dados/estatisticas.js`
+
+**Sem `--origens` (v:1):**
 
 ```js
 window.STATS_DATA = {
@@ -36,6 +38,21 @@ window.STATS_DATA = {
   cats: "tidavso",        // categorias: texto, imagem, documento, áudio, vídeo, figurinha, outros
   chats: [                // uma entrada por conversa, ordenada pela 1ª mensagem; ids renumerados
     [ grupo, anuncio, [ [t, flags], ... ] ],
+  ],
+  calls: [ [t, enviada, video, duracao_s, grupo, indice_da_conversa], ... ]
+};
+```
+
+**Com `--origens` (v:2):**
+
+```js
+window.STATS_DATA = {
+  v: 2,
+  origins: ["instagram", "google", "site"],  // rótulos dos canais configurados
+  gerado: "AAAA-MM-DD",
+  cats: "tidavso",
+  chats: [
+    [ grupo, anuncio, ori_idx, [ [t, flags], ... ] ],  // ori_idx: índice em origins, ou -1
   ],
   calls: [ [t, enviada, video, duracao_s, grupo, indice_da_conversa], ... ]
 };

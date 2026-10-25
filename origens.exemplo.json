@@ -1,0 +1,12 @@
+{
+  "_comentario": "Arquivo de exemplo. Copie para origens.json e ajuste os termos para o seu negócio.",
+  "_uso": "Passe --origens origens.json ao rodar preparar-dados, ou aceite quando perguntado.",
+  "_formato": "Cada chave é o rótulo exibido no painel. Cada valor é uma lista de termos buscados na primeira mensagem recebida do contato (sem distinção de maiúsculas/minúsculas nem acentos).",
+  "instagram": ["instagram", "insta", "reels", "stories"],
+  "google": ["google", "maps", "google meu negócio"],
+  "site": ["site", "pelo site", "seu site"],
+  "tiktok": ["tiktok"],
+  "facebook": ["facebook", "face"],
+  "indicacao": ["indicação", "indicado", "me indicou", "fui indicada", "fui indicado"],
+  "youtube": ["youtube"]
+}

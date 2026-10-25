@@ -21,6 +21,7 @@ sem telefones e sem o texto das mensagens**, e **sem precisar levar o pendrive i
 ## O que você vai ter no final
 
 - **Contatos** únicos e **novos**, por dia, semana, mês, trimestre, semestre e ano.
+- **Canal de origem** dos contatos novos (opcional): identifica, na primeira mensagem recebida, se o contato veio pelo Instagram, Google, site, indicação ou qualquer outro canal que você configurar.
 - **Mensagens recebidas e enviadas**, por tipo de mídia: texto, imagem, documento, áudio, vídeo (e figurinha/outros).
 - **Tempo de resposta** nos dois sentidos (média, mediana e P90), tempo até a 1ª resposta a novos contatos e % dentro da meta.
 - **Ligações**: recebidas e feitas, atendidas e perdidas, voz e vídeo, duração e tempo para retornar uma ligação perdida.
@@ -80,6 +81,38 @@ Também: [segurança e privacidade](docs/seguranca-e-privacidade.md) e [crédito
 ## Demonstração
 
 As capturas de tela usam uma **demonstração 100% fictícia**, gerada por `demo/gerar_demo.py`. Veja [demo/README.md](demo/README.md).
+
+## Identificar o canal de origem dos contatos (opcional)
+
+O painel pode identificar o canal pelo qual cada contato novo chegou até você, a partir da **primeira mensagem recebida** de cada
+conversa. Por exemplo: se o contato escreve "vim pelo Instagram" ou "pesquisei no Google", o painel conta esse contato na categoria
+correspondente e exibe o gráfico **"Contatos novos por canal de origem"** na aba Contatos.
+
+### Como configurar
+
+1. Copie o arquivo `origens.exemplo.json` para `origens.json` (na raiz do projeto).
+2. Edite `origens.json` com os canais e termos do seu negócio:
+
+```json
+{
+  "instagram": ["instagram", "insta", "reels"],
+  "google":    ["google", "maps"],
+  "site":      ["site", "pelo site"],
+  "indicação": ["indicação", "me indicou", "fui indicado"]
+}
+```
+
+Cada **chave** é o rótulo exibido no painel. Cada **valor** é a lista de palavras ou expressões buscadas na primeira mensagem
+recebida (sem distinção de maiúsculas/minúsculas nem acentos).
+
+3. Rode o script de preparação informando o arquivo:
+   - Windows: `.\preparar-dados.ps1 -Pendrive "D:\pendrive" -Origens ".\origens.json"`
+   - Linux/macOS: `bash preparar-dados.sh /caminho/do/pendrive "" ./origens.json`
+
+   Se você não passar o argumento, o script pergunta se quer usar o arquivo de exemplo.
+
+> **Nota:** `origens.json` é específico do seu negócio. Não o inclua em commits nem compartilhe — está no `.gitignore` por padrão.
+> O arquivo de exemplo (`origens.exemplo.json`) sim é incluído no repositório como ponto de partida.
 
 ## Aviso importante
 

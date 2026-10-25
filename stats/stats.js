@@ -94,6 +94,12 @@
     kp.novosIn = K("Novos iniciados pelo contato", newIn, bsum(function (x) { return sum(x.newIn); }), "int", 0, A.newIn);
     kp.novosOut = K("Novos iniciados por nós", newOut, bsum(function (x) { return sum(x.newOut); }), "int", 0, A.newOut);
     kp.novosAd = K("Novos via anúncio", newAd, bsum(function (x) { return sum(x.newAd); }), "int", 0, A.newAd, A.baseNew ? FMT.pct(newAd / A.baseNew * 100) + " dos novos" : "");
+    if (A.hasOriData && A.oriLabels.length > 0) {
+      var topOri = A.oriLabels.reduce(function (best, k) { return sum(A.newOri[k]) >= sum(A.newOri[best]) ? k : best; }, A.oriLabels[0]);
+      var knownOri = sum(A.newOriKnown);
+      kp.novosOriTop = K("Principal canal de origem", topOri, null, "text", 0, null, "canal com mais contatos novos identificados no período");
+      kp.novosOriPct = K("Origem identificada", A.baseNew ? knownOri / A.baseNew * 100 : null, null, "pct", 0, null, FMT.int(knownOri) + " de " + FMT.int(A.baseNew) + " novos");
+    }
     kp.recorrentes = K("Contatos recorrentes", A.recurring, bsum(function (x) { return x.recurring; }), "int", 0, A.activeRec, "ativos que já eram contatos antes do período");
     kp.recv = K("Mensagens recebidas", A.totRecv, bsum(function (x) { return x.totRecv; }), "int", 0, A.recv.tot);
     kp.sent = K("Mensagens enviadas", A.totSent, bsum(function (x) { return x.totSent; }), "int", 0, A.sent.tot);
@@ -166,7 +172,9 @@
         ] })
     ] };
 
-    V.contacts = { kpis: [kp.uniq, kp.base, kp.novos, kp.recorrentes, kp.novosIn, kp.novosOut, kp.novosAd, kp.noreply], blocks: [
+    var contactsKpis = [kp.uniq, kp.base, kp.novos, kp.recorrentes, kp.novosIn, kp.novosOut, kp.novosAd, kp.noreply];
+    if (A.hasOriData) contactsKpis.splice(7, 0, kp.novosOriTop, kp.novosOriPct);
+    var contactsBlocks = [
       spec({ id: "c_new", title: "Contatos novos por origem da conversa", sub: "Quem enviou a primeira mensagem", wide: true, labels: A.labels, plabels: pl, fmt: "int", sum: true, stackable: true,
         kinds: ["stack", "bar", "line", "area", "donut"], def: "stack", good: 0,
         series: [ser("Iniciados pelo contato", "s1", A.newIn, b && b.newIn), ser("Iniciados por nós", "s2", A.newOut, b && b.newOut)] }),
@@ -175,13 +183,23 @@
         series: [ser("Novos", "s1", A.activeNew, b && b.activeNew), ser("Recorrentes", "s2", A.activeRec, b && b.activeRec)] }),
       spec({ id: "c_ad", title: "Novos contatos: anúncio x orgânico", sub: "Anúncio = conversa iniciada por anúncio (Click-to-WhatsApp)", labels: A.labels, plabels: pl, fmt: "int", sum: true, stackable: true,
         kinds: ["stack", "bar", "line", "area", "donut"], def: "stack", good: 0,
-        series: [ser("Via anúncio", "s3", A.newAd, b && b.newAd), ser("Orgânico", "s4", A.newC.map(function (v, i) { return v - A.newAd[i]; }), b && b.newC.map(function (v, i) { return v - b.newAd[i]; }))] }),
+        series: [ser("Via anúncio", "s3", A.newAd, b && b.newAd), ser("Orgânico", "s4", A.newC.map(function (v, i) { return v - A.newAd[i]; }), b && b.newC.map(function (v, i) { return v - b.newAd[i]; }))] })
+    ];
+    if (A.hasOriData) {
+      contactsBlocks.push(spec({ id: "c_ori", title: "Contatos novos por canal de origem", sub: "Canal identificado na primeira mensagem recebida", wide: true, labels: A.labels, plabels: pl, fmt: "int", sum: true, stackable: true,
+        kinds: ["stack", "bar", "line", "area", "donut"], def: "stack", good: 0,
+        series: A.oriLabels.map(function (k, i) {
+          return ser(k, "s" + ((i % 7) + 1), A.newOri[k], b && b.newOri && b.newOri[k]);
+        }).concat([ser("Não identificado", "muted", A.newOriUnkn, b && b.newOriUnkn)]) }));
+    }
+    contactsBlocks.push(
       spec({ id: "c_base", title: "Base acumulada de contatos", sub: "Total de contatos únicos ao final de cada intervalo", labels: A.labels, plabels: pl, fmt: "int", sum: false, stackable: false, foot: false,
         kinds: ["line", "area", "bar"], def: "area", good: 0, series: [ser("Base acumulada", "s1", A.baseCum, b && b.baseCum)] }),
       spec({ id: "c_depth", title: "Profundidade das conversas", sub: "Contatos ativos por quantidade de mensagens trocadas no período", labels: ST.DEPTH.map(function (d) { return d[0]; }), plabels: ST.DEPTH.map(function (d) { return d[0]; }),
         fmt: "int", sum: true, stackable: true, cat: true, kinds: ["bar", "donut"], def: "bar", good: 0, labelHead: "Mensagens na conversa",
         series: [ser("Contatos", "s1", A.depth, b && b.depth)] })
-    ] };
+    );
+    V.contacts = { kpis: contactsKpis, blocks: contactsBlocks };
 
     function msgsView(dir, word) {
       var P = dir === "recv" ? "Mensagens recebidas" : "Mensagens enviadas";

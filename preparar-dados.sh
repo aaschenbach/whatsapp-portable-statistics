@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Prepara os dados do painel de estatisticas a partir do pendrive gerado pelo whatsapp-portable-viewer.
-# Uso: bash preparar-dados.sh [/caminho/do/pendrive] [/outro/estatisticas.js]
+# Uso: bash preparar-dados.sh [/caminho/do/pendrive] [/outro/estatisticas.js] [/origens.json]
 set -e
 cd "$(dirname "$0")"
 export PYTHONUTF8=1
@@ -9,6 +9,7 @@ fail() { printf '\033[31m[ERRO]\033[0m %s\n' "$1" >&2; exit 1; }
 
 PENDRIVE="$1"
 SAIDA="$2"
+ORIGENS="${3:-}"
 if [ -z "$PENDRIVE" ]; then
   echo "Informe a pasta do pendrive gerada pelo whatsapp-portable-viewer"
   echo '(a pasta que contem a subpasta "data"; a pasta Media nao e usada).'
@@ -18,8 +19,20 @@ PENDRIVE="${PENDRIVE%\"}"; PENDRIVE="${PENDRIVE#\"}"
 PENDRIVE="${PENDRIVE/#\~/$HOME}"
 [ -f "$PENDRIVE/data/chats.js" ] || fail "Nao encontrei data/chats.js em '$PENDRIVE'. Informe a pasta gerada pelo viewer (a que contem a pasta data)."
 
+if [ -z "$ORIGENS" ] && [ -f "$(dirname "$0")/origens.exemplo.json" ]; then
+  echo
+  read -rp "Detectar o canal de origem dos contatos usando o arquivo de exemplo (origens.exemplo.json)? [S/N] " resp
+  case "$resp" in
+    [Ss]*)
+      ORIGENS="$(dirname "$0")/origens.exemplo.json"
+      echo "Usando origens.exemplo.json. Para personalizar, copie para origens.json e ajuste os termos."
+      ;;
+  esac
+fi
+
 EXTRA=()
-[ -n "$SAIDA" ] && EXTRA=(--saida "$SAIDA")
+[ -n "$SAIDA" ]   && EXTRA+=(--saida "$SAIDA")
+[ -n "$ORIGENS" ] && EXTRA+=(--origens "$ORIGENS")
 
 is_py3() { "$1" --version 2>&1 | grep -q "Python 3"; }
 

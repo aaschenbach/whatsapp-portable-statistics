@@ -28,9 +28,17 @@ def escrever_pendrive(base, chats):
     return base
 
 
-def rodar(pendrive, saida, monkeypatch):
-    monkeypatch.setattr(sys, "argv", ["anonimizar.py", str(pendrive), "--saida", str(saida)])
+def rodar(pendrive, saida, monkeypatch, origens=None):
+    argv = ["anonimizar.py", str(pendrive), "--saida", str(saida)]
+    if origens is not None:
+        argv += ["--origens", str(origens)]
+    monkeypatch.setattr(sys, "argv", argv)
     return anon.main()
+
+
+def msgs_de(chat, dados):
+    """Retorna a lista de [t, flags] do chat, compatível com v:1 e v:2."""
+    return chat[3] if dados.get("v") == 2 else chat[2]
 
 
 def carregar(saida):
@@ -90,6 +98,8 @@ def test_nao_vaza_nome_telefone_nem_texto(tmp_path, monkeypatch):
             return all(so_numeros(v) for v in valor)
         return isinstance(valor, int)
 
+    # chats e calls só podem conter números (nomes, telefones e textos não devem vazar)
+    # origins (quando presente) contém rótulos definidos pelo usuário, não dados pessoais
     assert so_numeros(dados["chats"]) and so_numeros(dados["calls"])
     assert re.fullmatch(r"\d{4}-\d{2}-\d{2}", dados["gerado"]) and dados["cats"] == "tidavso"
 
@@ -100,8 +110,8 @@ def test_automaticas_so_quando_repetidas_e_rapidas(tmp_path, monkeypatch, capsys
     rodar(pend, saida, monkeypatch)
     dados = carregar(saida)
     automaticas = manuais = 0
-    for g, ad, msgs in dados["chats"]:
-        for t, flags in msgs:
+    for chat in dados["chats"]:
+        for t, flags in msgs_de(chat, dados):
             d = decodificar(flags)
             if d["auto"]:
                 automaticas += 1
@@ -136,21 +146,21 @@ def test_tipos_grupo_anuncio_ligacoes_e_renumeracao(tmp_path, monkeypatch):
     dados = carregar(saida)
 
     # ordenadas pela 1ª mensagem; as sem mensagem ficam no fim; ids originais não aparecem
-    assert [len(c[2]) for c in dados["chats"]] == [1, 4, 1, 0]
+    assert [len(msgs_de(c, dados)) for c in dados["chats"]] == [1, 4, 1, 0]
     por_ad = [c for c in dados["chats"] if c[1] == 1]
-    assert len(por_ad) == 1 and len(por_ad[0][2]) == 1
+    assert len(por_ad) == 1 and len(msgs_de(por_ad[0], dados)) == 1
     grupos = [c for c in dados["chats"] if c[0] == 1]
     assert len(grupos) == 1
 
-    a = next(c for c in dados["chats"] if len(c[2]) == 4)
-    decod = [decodificar(f) for _, f in a[2]]
+    a = next(c for c in dados["chats"] if len(msgs_de(c, dados)) == 4)
+    decod = [decodificar(f) for _, f in msgs_de(a, dados)]
     assert decod[0]["enc"] == 1 and decod[0]["m"] == 0          # "Obrigada!" -> encerramento recebido
     assert decod[1]["enc"] == 1                                   # figurinha -> encerramento
     assert decod[2]["cat"] == dados["cats"].index("v") and decod[2]["m"] == 1   # GIF conta como vídeo
     assert decod[3]["cat"] == dados["cats"].index("o")            # apagada -> outros
     # sistema ("x") fora das mensagens; ligações separadas, apontando para a conversa renumerada
     assert len(dados["calls"]) == 2
-    idx_a = dados["chats"].index(a)
+    idx_a = next(i for i, c in enumerate(dados["chats"]) if len(msgs_de(c, dados)) == 4)
     chamada_a = next(c for c in dados["calls"] if c[5] == idx_a)
     assert chamada_a[:5] == [T0 + 10000, 1, 1, 120, 0]
     assert all(0 <= c[5] < len(dados["chats"]) for c in dados["calls"])
@@ -180,4 +190,108 @@ def test_demonstracao_ficticia_passa_pelo_anonimizador(tmp_path, monkeypatch):
     assert rodar(tmp_path / "demo" / "saida" / "pendrive", saida, monkeypatch) == 0
     dados = carregar(saida)
     assert len(dados["chats"]) == 40 + demo.N_GROUPS
-    assert sum(len(c[2]) for c in dados["chats"]) > 400
+    assert sum(len(msgs_de(c, dados)) for c in dados["chats"]) > 400
+
+
+# ---------- testes de detecção de origem ----------
+
+def _origens_json(tmp_path, conteudo):
+    p = tmp_path / "origens.json"
+    p.write_text(json.dumps(conteudo), encoding="utf-8")
+    return p
+
+
+def test_sem_origens_mantem_v1(tmp_path, monkeypatch):
+    pend = escrever_pendrive(tmp_path / "pend", [(1, "X", 0, [
+        {"i": 1, "m": 0, "t": T0, "y": "t", "x": "vim pelo instagram"},
+    ])])
+    saida = tmp_path / "s.js"
+    assert rodar(pend, saida, monkeypatch) == 0
+    dados = carregar(saida)
+    assert dados["v"] == 1
+    assert "origins" not in dados
+    assert len(dados["chats"][0]) == 3  # [g, ad, msgs]
+
+
+def test_origem_detectada(tmp_path, monkeypatch):
+    pend = escrever_pendrive(tmp_path / "pend", [
+        (1, "X", 0, [{"i": 1, "m": 0, "t": T0, "y": "t", "x": "vim pelo instagram"}]),
+        (2, "Y", 0, [{"i": 1, "m": 0, "t": T0 + 1000, "y": "t", "x": "pesquisei no google"}]),
+        (3, "Z", 0, [{"i": 1, "m": 0, "t": T0 + 2000, "y": "t", "x": "Bom dia, quero informações"}]),
+    ])
+    ori = _origens_json(tmp_path, {"instagram": ["instagram"], "google": ["google"]})
+    saida = tmp_path / "s.js"
+    assert rodar(pend, saida, monkeypatch, origens=ori) == 0
+    dados = carregar(saida)
+    assert dados["v"] == 2
+    assert set(dados["origins"]) == {"instagram", "google"}
+    ori_idx = {dados["origins"][c[2]]: c for c in dados["chats"] if c[2] >= 0}
+    assert "instagram" in ori_idx
+    assert "google" in ori_idx
+    sem_origem = [c for c in dados["chats"] if c[2] == -1]
+    assert len(sem_origem) == 1  # "Bom dia..." não tem padrão
+
+
+def test_origem_nao_detectada(tmp_path, monkeypatch):
+    pend = escrever_pendrive(tmp_path / "pend", [(1, "X", 0, [
+        {"i": 1, "m": 0, "t": T0, "y": "t", "x": "Boa tarde, quero uma consulta"},
+    ])])
+    ori = _origens_json(tmp_path, {"instagram": ["instagram"]})
+    saida = tmp_path / "s.js"
+    assert rodar(pend, saida, monkeypatch, origens=ori) == 0
+    dados = carregar(saida)
+    assert dados["v"] == 2
+    assert dados["chats"][0][2] == -1
+
+
+def test_origem_ignora_enviadas(tmp_path, monkeypatch):
+    pend = escrever_pendrive(tmp_path / "pend", [(1, "X", 0, [
+        {"i": 1, "m": 1, "t": T0, "y": "t", "x": "Olá, posso ajudar?"},
+        {"i": 2, "m": 0, "t": T0 + 5000, "y": "t", "x": "Sim, vim pelo instagram"},
+    ])])
+    ori = _origens_json(tmp_path, {"instagram": ["instagram"]})
+    saida = tmp_path / "s.js"
+    assert rodar(pend, saida, monkeypatch, origens=ori) == 0
+    dados = carregar(saida)
+    assert dados["v"] == 2
+    assert dados["chats"][0][2] == dados["origins"].index("instagram")
+
+
+def test_origem_normaliza_acentos(tmp_path, monkeypatch):
+    pend = escrever_pendrive(tmp_path / "pend", [(1, "X", 0, [
+        {"i": 1, "m": 0, "t": T0, "y": "t", "x": "Indicação da minha amiga"},
+    ])])
+    ori = _origens_json(tmp_path, {"indicacao": ["indicacao"]})
+    saida = tmp_path / "s.js"
+    assert rodar(pend, saida, monkeypatch, origens=ori) == 0
+    dados = carregar(saida)
+    assert dados["v"] == 2
+    assert dados["chats"][0][2] == dados["origins"].index("indicacao")
+
+
+def test_origem_sem_msg_recebida(tmp_path, monkeypatch):
+    pend = escrever_pendrive(tmp_path / "pend", [(1, "X", 0, [
+        {"i": 1, "m": 1, "t": T0, "y": "t", "x": "Olá, tudo bem?"},
+        {"i": 2, "m": 1, "t": T0 + 1000, "y": "t", "x": "vim pelo instagram"},
+    ])])
+    ori = _origens_json(tmp_path, {"instagram": ["instagram"]})
+    saida = tmp_path / "s.js"
+    assert rodar(pend, saida, monkeypatch, origens=ori) == 0
+    dados = carregar(saida)
+    assert dados["v"] == 2
+    assert dados["chats"][0][2] == -1
+
+
+def test_origens_ignora_grupos(tmp_path, monkeypatch):
+    pend = escrever_pendrive(tmp_path / "pend", [
+        (1, "G", 1, [{"i": 1, "m": 0, "t": T0, "y": "t", "x": "vim pelo instagram"}]),
+        (2, "I", 0, [{"i": 1, "m": 0, "t": T0 + 1000, "y": "t", "x": "vim pelo instagram"}]),
+    ])
+    ori = _origens_json(tmp_path, {"instagram": ["instagram"]})
+    saida = tmp_path / "s.js"
+    assert rodar(pend, saida, monkeypatch, origens=ori) == 0
+    dados = carregar(saida)
+    grupo = next(c for c in dados["chats"] if c[0] == 1)
+    indiv = next(c for c in dados["chats"] if c[0] == 0)
+    assert grupo[2] == -1   # grupo não tem origem detectada
+    assert indiv[2] == dados["origins"].index("instagram")

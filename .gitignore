@@ -15,6 +15,7 @@ dados/*
 pendrive/
 Media/
 msgstore.db*
+origens.json
 wa.db*
 *.crypt12
 *.crypt14

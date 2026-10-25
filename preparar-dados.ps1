@@ -1,9 +1,10 @@
 ﻿# Prepara os dados do painel de estatisticas a partir do pendrive gerado pelo whatsapp-portable-viewer.
-# Uso: powershell -File preparar-dados.ps1 [-Pendrive "C:\caminho\pendrive"] [-Saida "C:\outro\estatisticas.js"]
+# Uso: powershell -File preparar-dados.ps1 [-Pendrive "C:\caminho\pendrive"] [-Saida "C:\outro\estatisticas.js"] [-Origens "C:\origens.json"]
 # (ou duplo clique em preparar-dados.bat)
 param(
     [string]$Pendrive,   # pasta gerada pelo viewer (a que contem a pasta data)
-    [string]$Saida       # opcional: arquivo de saida (padrao: dados\estatisticas.js)
+    [string]$Saida,      # opcional: arquivo de saida (padrao: dados\estatisticas.js)
+    [string]$Origens     # opcional: arquivo JSON com padroes de origem dos contatos
 )
 
 $ErrorActionPreference = 'Stop'
@@ -23,9 +24,22 @@ if (-not (Test-Path -LiteralPath (Join-Path $Pendrive 'data\chats.js'))) {
     Fail "Nao encontrei data\chats.js em '$Pendrive'. Informe a pasta gerada pelo viewer (a que contem a pasta data)."
 }
 
+if (-not $Origens) {
+    $exemplo = Join-Path $PSScriptRoot 'origens.exemplo.json'
+    if (Test-Path -LiteralPath $exemplo) {
+        Write-Host ''
+        $resp = Read-Host 'Detectar o canal de origem dos contatos usando o arquivo de exemplo (origens.exemplo.json)? [S/N]'
+        if ($resp -match '^[Ss]') {
+            $Origens = $exemplo
+            Write-Host 'Usando origens.exemplo.json. Para personalizar, copie para origens.json e ajuste os termos.' -ForegroundColor Cyan
+        }
+    }
+}
+
 $script = Join-Path $PSScriptRoot 'scripts\anonimizar.py'
 $extra = @()
-if ($Saida) { $extra = @('--saida', $Saida) }
+if ($Saida) { $extra += @('--saida', $Saida) }
+if ($Origens) { $extra += @('--origens', $Origens) }
 
 function Test-Python([string]$exe, [string[]]$pre) {
     try {

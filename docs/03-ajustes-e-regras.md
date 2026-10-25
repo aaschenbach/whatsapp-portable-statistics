@@ -54,6 +54,15 @@ resposta" e não abrem uma espera de resposta.
 Contam só o que está parado há **mais de 24 horas** (as mais recentes aparecem à parte, como "recentes") e que não é um encerramento.
 Respostas dadas por ligação ou por outro canal não aparecem no backup, então uma conversa resolvida assim ainda conta como sem resposta.
 
+## Canal de origem dos contatos
+
+O gráfico **"Contatos novos por canal de origem"** (aba Contatos) e os indicadores "Principal canal de origem" e "Origem identificada"
+**só aparecem quando padrões de origem foram configurados** ao gerar o arquivo de estatísticas (opção `--origens`). Veja
+[como configurar](../README.pt-BR.md#identificar-o-canal-de-origem-dos-contatos-opcional).
+
+A detecção é feita na **primeira mensagem de texto recebida** de cada conversa individual (não grupos), comparando o conteúdo
+normalizado (sem acentos, sem maiúsculas) com os termos configurados. Contatos que não mencionam a origem ficam em "Não identificado".
+
 ## Período fechado
 
 Veja o capítulo [Usando o painel](02-usando-o-painel.md#comparação-e-intervalos-parciais).

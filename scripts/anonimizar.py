@@ -3,10 +3,14 @@
 Lê somente <pendrive>/data/chats.js e <pendrive>/data/chat_*.js (a pasta Media não é usada)
 e grava um único arquivo (padrão: dados/estatisticas.js) sem nomes, telefones nem texto de
 mensagens: apenas data/hora, direção, tipo de mídia e marcações calculadas aqui
-(automática, encerramento, anúncio, grupo, ligações). Os ids das conversas são renumerados.
+(automática, encerramento, anúncio, grupo, ligações, origem). Os ids das conversas são renumerados.
 
 A lógica de "encerramento" e de "mensagem automática" é a mesma do painel original;
 a conferência é feita comparando os números dos dois caminhos (ver tests/).
+
+Detecção de origem (opcional):
+  Passe --origens <arquivo.json> com um mapa {rótulo: [termos]} para identificar o canal de
+  aquisição de cada contato novo a partir da primeira mensagem recebida. Veja origens.exemplo.json.
 """
 import argparse
 import json
@@ -69,11 +73,39 @@ def read_js_json(path, pattern):
     return m
 
 
+def load_patterns(path):
+    """Lê arquivo de origens JSON. Retorna dict {rótulo: [termo_normalizado]}."""
+    raw = json.loads(Path(path).read_text(encoding="utf-8"))
+    result = {}
+    for k, v in raw.items():
+        if k.startswith("_"):
+            continue
+        terms = [norm_text(t) for t in v if isinstance(t, str) and t.strip()]
+        if terms:
+            result[k] = terms
+    return result
+
+
+def detect_origin(recs, patterns):
+    """Retorna rótulo de origem da primeira mensagem recebida, ou None."""
+    for r in recs:
+        if r.get("m") or r.get("y") != "t" or not r.get("x"):
+            continue
+        t_norm = norm_text(r["x"])
+        for key, terms in patterns.items():
+            if any(term in t_norm for term in terms):
+                return key
+        break  # analisa só a primeira mensagem recebida
+    return None
+
+
 def main():
     here = Path(__file__).resolve().parent.parent
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("pendrive", help="pasta do pendrive gerada pelo whatsapp-portable-viewer (a que contém data/)")
     ap.add_argument("--saida", default=str(here / "dados" / "estatisticas.js"), help="arquivo de saída")
+    ap.add_argument("--origens", default=None, metavar="ARQUIVO",
+                    help="arquivo JSON com padrões de origem dos contatos (ex: origens.json)")
     args = ap.parse_args()
 
     data = Path(args.pendrive) / "data"
@@ -82,11 +114,21 @@ def main():
         print(f"ERRO: não encontrei {chats_js}. Informe a pasta do pendrive gerada pelo viewer (a que contém a pasta data).", file=sys.stderr)
         return 2
 
+    patterns = {}
+    if args.origens:
+        try:
+            patterns = load_patterns(args.origens)
+        except (OSError, ValueError, KeyError) as e:
+            print(f"ERRO ao ler arquivo de origens '{args.origens}': {e}", file=sys.stderr)
+            return 2
+        if not patterns:
+            print(f"Aviso: arquivo de origens '{args.origens}' não contém padrões válidos.", file=sys.stderr)
+
     meta = json.loads(read_js_json(chats_js, r"window\.CHATS=(\[.*\]);\s*window\.META=").group(1))
     is_group = {c["id"]: 1 if c.get("isGroup") else 0 for c in meta}
     del meta  # nomes e telefones nunca são usados
 
-    raw = []      # (id, g, ad, msgs[[t, m, cat, text_key, closing]])
+    raw = []      # (id, g, ad, origin, msgs[[t, m, cat, text_key, closing]])
     calls = []    # (t, m, v, d, g, id)
     failed = 0
     for cid, g in is_group.items():
@@ -116,13 +158,14 @@ def main():
                 cl = 1
             msgs.append([r["t"], 1 if r.get("m") else 0, CATIDX[CATMAP.get(y, "o")], key, cl, 0])
         msgs.sort(key=lambda x: x[0])  # estável, como no painel
-        raw.append((cid, g, 1 if ad else 0, msgs))
+        origin = detect_origin(recs, patterns) if patterns and not g else None
+        raw.append((cid, g, 1 if ad else 0, origin, msgs))
 
     # mensagens automáticas: texto repetido em várias conversas e enviado em segundos após o outro lado
     stats = {}
 
     def walk(fn):
-        for ci, (_, g, _, msgs) in enumerate(raw):
+        for ci, (_, g, _, _origin, msgs) in enumerate(raw):
             if g:
                 continue
             last_t, last_m = 0, -1
@@ -154,22 +197,47 @@ def main():
     walk(mark)
 
     # renumera as conversas pela data da primeira mensagem (os ids originais não vão para a saída)
-    order = sorted(range(len(raw)), key=lambda i: (raw[i][3][0][0] if raw[i][3] else float("inf"), i))
+    order = sorted(range(len(raw)), key=lambda i: (raw[i][4][0][0] if raw[i][4] else float("inf"), i))
     newid = {raw[i][0]: n for n, i in enumerate(order)}
-    chats_out = []
-    for i in order:
-        _, g, ad, msgs = raw[i]
-        chats_out.append([g, ad, [[m[0], m[2] | (m[4] << 3) | (m[5] << 4) | (m[1] << 5)] for m in msgs]])
-    calls_out = sorted([[t, m, v, d, g, newid[cid]] for t, m, v, d, g, cid in calls])
 
-    out = {"v": 1, "gerado": date.today().isoformat(), "cats": "".join(CATS), "chats": chats_out, "calls": calls_out}
+    def compress(msgs):
+        return [[m[0], m[2] | (m[4] << 3) | (m[5] << 4) | (m[1] << 5)] for m in msgs]
+
+    if patterns:
+        seen_ori, ori_labels = set(), []
+        for _, _, _, origin, _ in raw:
+            if origin and origin not in seen_ori:
+                seen_ori.add(origin)
+                ori_labels.append(origin)
+        ori_index = {k: i for i, k in enumerate(ori_labels)}
+        chats_out = []
+        for i in order:
+            _, g, ad, origin, msgs = raw[i]
+            chats_out.append([g, ad, ori_index.get(origin, -1), compress(msgs)])
+        calls_out = sorted([[t, m, v, d, g, newid[cid]] for t, m, v, d, g, cid in calls])
+        out = {"v": 2, "origins": ori_labels, "gerado": date.today().isoformat(),
+               "cats": "".join(CATS), "chats": chats_out, "calls": calls_out}
+    else:
+        chats_out = []
+        for i in order:
+            _, g, ad, _origin, msgs = raw[i]
+            chats_out.append([g, ad, compress(msgs)])
+        calls_out = sorted([[t, m, v, d, g, newid[cid]] for t, m, v, d, g, cid in calls])
+        out = {"v": 1, "gerado": date.today().isoformat(), "cats": "".join(CATS),
+               "chats": chats_out, "calls": calls_out}
+
     dest = Path(args.saida)
     dest.parent.mkdir(parents=True, exist_ok=True)
     dest.write_text("window.STATS_DATA=" + json.dumps(out, separators=(",", ":")) + ";\n", encoding="utf-8")
 
-    n_msgs = sum(len(c[2]) for c in chats_out)
+    n_msgs = sum(len(c[-1]) for c in chats_out)
     print(f"OK: {len(chats_out)} conversas, {n_msgs} mensagens, {len(calls_out)} ligações "
           f"({auto['sent']} automáticas enviadas e {auto['recv']} recebidas detectadas).")
+    if patterns:
+        counts = {k: sum(1 for _, _, _, origin, _ in raw if origin == k) for k in ori_labels}
+        total_ori = sum(counts.values())
+        detail = ", ".join(f"{k}: {v}" for k, v in counts.items())
+        print(f"Origens identificadas: {total_ori} contato(s) ({detail}).")
     print(f"Arquivo gerado: {dest} ({dest.stat().st_size / 1e6:.1f} MB)")
     if failed:
         print(f"Aviso: {failed} conversa(s) listada(s) em chats.js sem arquivo legível.", file=sys.stderr)

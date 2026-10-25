@@ -187,16 +187,30 @@
   }
 
   // Carrega o arquivo único gerado por scripts/anonimizar.py (dados/estatisticas.js).
-  // msg = [t, m(0 recebida/1 enviada), categoria, 0, encerramento, automática]
+  // v:1 — msg = [t, m(0 recebida/1 enviada), categoria, 0, encerramento, automática]
+  // v:2 — igual v:1, mais campo ori por chat (canal de origem identificado na 1ª mensagem recebida)
   ST.load = function (onProgress) {
     return new Promise(function (resolve, reject) {
       var D = window.STATS_DATA;
-      if (!D || D.v !== 1 || !D.chats) { reject(new Error("arquivo de dados ausente ou em formato desconhecido")); return; }
+      if (!D || (D.v !== 1 && D.v !== 2) || !D.chats) { reject(new Error("arquivo de dados ausente ou em formato desconhecido")); return; }
       var codes = D.cats;
+      var origins = (D.v === 2 && Array.isArray(D.origins) && D.origins.length > 0) ? D.origins : null;
+      ST.hasOrigins = !!origins;
       D.chats.forEach(function (c, ci) {
-        if (!c[2].length) return;
-        var arr = c[2].map(function (r) { var f = r[1]; return [r[0], (f >> 5) & 1, codes.charAt(f & 7), 0, (f >> 3) & 1, (f >> 4) & 1]; });
-        chats.push({ id: ci, g: c[0], msgs: arr, first: arr[0][0], fm: arr[0][1], ad: !!c[1] });
+        var msgs, ad, oriLabel;
+        if (D.v === 2) {
+          if (!c[3].length) return;
+          ad = !!c[1];
+          oriLabel = (origins && c[2] >= 0) ? origins[c[2]] : null;
+          msgs = c[3];
+        } else {
+          if (!c[2].length) return;
+          ad = !!c[1];
+          oriLabel = null;
+          msgs = c[2];
+        }
+        var arr = msgs.map(function (r) { var f = r[1]; return [r[0], (f >> 5) & 1, codes.charAt(f & 7), 0, (f >> 3) & 1, (f >> 4) & 1]; });
+        chats.push({ id: ci, g: c[0], msgs: arr, first: arr[0][0], fm: arr[0][1], ad: ad, ori: oriLabel });
       });
       D.calls.forEach(function (k) { ST.calls.push({ t: k[0], m: k[1], v: k[2], d: k[3], g: k[4], id: k[5] }); });
       window.STATS_DATA = null;
@@ -305,6 +319,17 @@
       heat: { recv: matrix(7, 24), sent: matrix(7, 24) },
       depth: zeros(DEPTH.length), uniq: 0, base0: 0, baseNew: 0
     };
+    // origens de contato (só presentes quando dados gerados com --origens)
+    var oriLabels = [];
+    if (ST.hasOrigins) {
+      chats.forEach(function (c) { if (!c.g && c.ori && oriLabels.indexOf(c.ori) < 0) oriLabels.push(c.ori); });
+    }
+    A.oriLabels = oriLabels;
+    A.newOri = {};
+    oriLabels.forEach(function (k) { A.newOri[k] = zeros(nb); });
+    A.newOriKnown = zeros(nb);
+    A.newOriUnkn = zeros(nb);
+    A.hasOriData = ST.hasOrigins;
     var inScope = function (c) { return scope === "all" || (scope === "ind" ? !c.g : !!c.g); };
     function keep(x) { return !(o.noAuto && x[5]) && !ctx.ex(x[0]); }
 
@@ -321,6 +346,10 @@
         A.newC[b]++; A.baseNew++;
         if (fm === 0) A.newIn[b]++; else A.newOut[b]++;
         if (c.ad) A.newAd[b]++;
+        if (ST.hasOrigins) {
+          if (c.ori) { A.newOri[c.ori][b]++; A.newOriKnown[b]++; }
+          else        { A.newOriUnkn[b]++; }
+        }
         if (!ctx.inH(first)) A.newOoh[b]++;
       }
       var lastB = -1, cnt = 0;

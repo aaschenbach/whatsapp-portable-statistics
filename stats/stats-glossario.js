@@ -339,6 +339,26 @@
       s: "Contatos novos separados por origem: anúncio ou orgânico.",
       h: ["Via anúncio: conversas com o aviso de início por anúncio. Orgânico: os demais contatos novos."],
       w: ["Ver \"Novos via anúncio\"."] },
+    novosOriTop: { k: "k", g: "Contatos", t: "Principal canal de origem",
+      s: "Canal que mais trouxe contatos novos identificados no período.",
+      h: ["Conta os contatos novos cuja primeira mensagem recebida contém um dos termos configurados no arquivo de origens.",
+        "Exibe o canal com o maior volume de contatos novos no período selecionado.",
+        "Só aparece quando padrões de origem foram configurados ao gerar o arquivo de estatísticas (opção --origens)."],
+      w: ["Canais não cobertos pelos padrões configurados ficam em \"Não identificado\"."] },
+    novosOriPct: { k: "k", g: "Contatos", t: "Origem identificada",
+      s: "Percentual de contatos novos com canal de origem identificado.",
+      h: ["Proporção de contatos novos em que a primeira mensagem recebida continha algum dos termos configurados.",
+        "Só aparece quando padrões de origem foram configurados ao gerar o arquivo de estatísticas (opção --origens)."],
+      w: ["Um valor baixo indica que muitos contatos não mencionam a origem ou os padrões configurados não cobrem todos os canais."] },
+    c_ori: { k: "b", g: "Contatos", t: "Contatos novos por canal de origem",
+      s: "Contatos novos separados pelo canal identificado na primeira mensagem recebida.",
+      h: ["Para cada contato novo, verifica se a primeira mensagem recebida contém algum dos termos configurados no arquivo de origens.",
+        "\"Não identificado\" agrupa os contatos em que nenhum padrão foi encontrado na primeira mensagem recebida.",
+        "Só aparece quando padrões de origem foram configurados ao gerar o arquivo de estatísticas (opção --origens)."],
+      d: ["Os mesmos ajustes de contatos novos se aplicam: período, escopo, desconsiderar automáticas."],
+      w: ["Os rótulos dos canais são os definidos pelo usuário no arquivo de origens; podem variar entre instalações.",
+        "Contatos iniciados por nós (sem mensagem recebida como primeira) aparecem em \"Não identificado\".",
+        "Um contato via anúncio (Click-to-WhatsApp) pode também ter canal identificado se a mensagem pré-preenchida contiver um dos termos configurados."] },
     c_base: { k: "b", g: "Contatos", t: "Base acumulada de contatos",
       s: "Total de contatos ao final de cada intervalo.",
       h: ["Contatos existentes antes do período mais os novos acumulados até o fim de cada intervalo."], w: ["Ver \"Base acumulada de contatos\"."] },
@@ -414,7 +434,7 @@
   Object.keys(E).forEach(function (k) { E[k].id = k; GL[k] = E[k]; });
 
   // gráficos com eixo de tempo: mesmo aviso sobre intervalos das pontas
-  var TIME_AXIS = ["ov_msgs", "ov_new", "ov_rt", "c_new", "c_active", "c_ad", "c_base", "recv_types", "sent_types", "recv_total", "sent_total",
+  var TIME_AXIS = ["ov_msgs", "ov_new", "ov_rt", "c_new", "c_active", "c_ad", "c_ori", "c_base", "recv_types", "sent_types", "recv_total", "sent_total",
     "r_our", "r_con", "r_frt", "r_ooh", "k_status", "k_type", "k_dur", "k_ooh", "p_oohr", "p_oohs", "p_ratio"];
   TIME_AXIS.forEach(function (id) {
     var e = E[id];
